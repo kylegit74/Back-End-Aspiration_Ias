@@ -10,7 +10,7 @@ const app = express();
 
 const allowedOrigins = [
     "http://localhost:3000",  // Development
-    "https://aspritaionias.vercel.app"  // Correct Vercel URL
+    "https://aspiration-ias-academy.vercel.app"  // Correct Vercel URL
 ];
 
 app.use(cors({

@@ -4,12 +4,14 @@ import cloudinary from '../Configs/CloudinaryConfig.js';
 import { CreateBannerService, DeleteBannerByIdService, FindBannerByIdService, GetAllBannerService } from '../Services/BannerService.js';
 import BannerModel from '../Models/Banner/BannerModel.js'
 
-const unlinkAsync = promisify(fs.unlink); 
+import { unlink } from 'fs/promises';
+
 
 export const CreateBannerController = async (req, res) => {
     try {
-        const {link}=req.body;
-        console.log('body',body);
+        const { link } = req.body;
+        console.log('req.body:', req.body); // ✅ Corrected
+
         if (!req.file) {
             return res.status(400).json({
                 message: 'No file uploaded',
@@ -23,9 +25,9 @@ export const CreateBannerController = async (req, res) => {
         });
 
         // Delete file from local storage
-        await unlinkAsync(req.file.path); 
+        await unlink(req.file.path); 
 
-        const created = await CreateBannerService({ image: uploaded.secure_url , link:link}); 
+        const created = await CreateBannerService({ image: uploaded.secure_url, link });
 
         if (created) {
             return res.status(200).json({
@@ -41,13 +43,15 @@ export const CreateBannerController = async (req, res) => {
         });
 
     } catch (error) {
-        console.error( error);
+        console.error(error);
         return res.status(500).json({
             message: 'Internal server error',
-            success: false
+            success: false,
+            error
         });
     }
 };
+
 export const DeleteBannerByIdController=async(req,res )=>{
     try{
         const id=req.params.id;
