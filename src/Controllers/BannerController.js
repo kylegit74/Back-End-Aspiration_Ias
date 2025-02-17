@@ -104,68 +104,65 @@ export const GetAllBannerController=async(req, res)=>{
     }
 }
 
-export const EditBannerController=async(req,res)=>{
-    try{
-        const id=req.params.id;
-        const {link}=req.body;
-        if(!id)
-        {
+
+
+export const EditBannerController = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const { link } = req.body;
+
+        if (!id) {
             return res.status(401).json({
-                message:'Invalid id',
-                success:false
-            })
+                message: 'Invalid id',
+                success: false
+            });
         }
-        if(!req.file.path)
-        {
+
+        let imageurl;// Default to the existing image URL if no new image is uploaded
+
+        if (req.file && req.file.path) {
+            const uploaded = await cloudinary.uploader.upload(req.file.path, {
+                resource_type: 'auto' // Allows both images and videos
+            });
+
+            fs.unlinkSync(req.file.path); // Remove the file after uploading
+            imageurl = uploaded.secure_url; // Update with the new image URL
+        }
+
+        const ExistingBanner = await FindBannerByIdService(id);
+        imageurl=ExistingBanner.image;
+        if (!ExistingBanner) {
             return res.status(404).json({
-                message:'Can not find file',
-                success:false
-            })
+                message: 'No Banner with this id',
+                success: false
+            });
         }
 
-        const ExistingBanner=await FindBannerByIdService(id);
-        if(!ExistingBanner)
-        {
-            return res.status(404).json({
-                message:'No Banner with this id',
-                success:false
-            })
-
-        }
-        
-       const uploaded = await cloudinary.uploader.upload(req.file.path, {
-            resource_type: 'auto' // Allows both images and videos
-        });
-
-        fs.unlinkSync(req.file.path);
         const updated = await BannerModel.findByIdAndUpdate(
             ExistingBanner._id, 
-            { image: uploaded.secure_url },
-            {link:link} ,
-            { new: true } 
+            { image: imageurl, link: link },  // Update both image and link
+            { new: true }
         );
-        
-        
 
-        if(updated)
-        {
-            return res.status(201).json({
-                message:'Updated successfully ',
+        if (updated) {
+            return res.status(200).json({
+                message: 'Updated successfully',
                 updated,
-                success:true
-            })
+                success: true
+            });
         }
+
         return res.status(400).json({
-            message:'Can not update', 
-            success:false
-        })
-         
-    }catch(error)
-    {
-        console.log('error',error)
+            message: 'Cannot update', 
+            success: false
+        });
+
+    } catch (error) {
+        console.log(error);
         return res.status(501).json({
-            message:'Internal server error',
-            success:false
-        })
+            message: 'Internal server error',
+            success: false
+        });
     }
-}
+};
+
