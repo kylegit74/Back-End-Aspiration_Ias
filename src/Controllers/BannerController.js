@@ -117,20 +117,22 @@ export const EditBannerController = async (req, res) => {
                 success: false
             });
         }
+        const ExistingBanner = await FindBannerByIdService(id);
 
-        let imageurl;// Default to the existing image URL if no new image is uploaded
+        let imageurl=ExistingBanner.image;// Default to the existing image URL if no new image is uploaded
 
         if (req.file && req.file.path) {
             const uploaded = await cloudinary.uploader.upload(req.file.path, {
                 resource_type: 'auto' // Allows both images and videos
             });
 
+            console.log('sdkfsd',req.file)
             fs.unlinkSync(req.file.path); // Remove the file after uploading
             imageurl = uploaded.secure_url; // Update with the new image URL
         }
 
-        const ExistingBanner = await FindBannerByIdService(id);
-        imageurl=ExistingBanner.image;
+     
+     
         if (!ExistingBanner) {
             return res.status(404).json({
                 message: 'No Banner with this id',

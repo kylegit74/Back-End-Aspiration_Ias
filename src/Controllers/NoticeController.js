@@ -159,44 +159,35 @@ export const EditNoticeController=async(req,res)=>{
 }
 export const EditOrder = async (req, res) => {
   try {
-    const { notices } = req.body;
+    const notices = req.body; // Array of notices from the request
+    const getallnotice = await NoticeModel.find({}); // Fetch all existing notices
+    
+    console.log('Received notices:', notices);
 
-    if (!Array.isArray(notices)) {
-      return res.status(400).json({
-        message: "Invalid data format: notices must be an array",
-        success: false
+    if (!getallnotice || getallnotice.length === 0) {
+      return res.status(404).json({
+        message: 'Cannot get notices',
+        success: false,
       });
     }
 
-    console.log("Received notices:", notices);
-
-    for (let i = 0; i < notices.length; i++) {
-      if (!notices[i]._id) {
-        console.error("Missing _id in notice:", notices[i]);
-        continue;
-      }
-
-      try {
-        const notice = await NoticeModel.findByIdAndUpdate(notices[i]._id, { order: i });
-        if (!notice) {
-          console.error("No notice found with ID:", notices[i]._id);
-        }
-      } catch (dbError) {
-        console.error("Database error:", dbError);
-      }
-    }
-
+    // Ensure that the notices are updated in the same order as they are received
+    // Process the updates sequentially using a for loop
+  for(let i=0;i<getallnotice.length;i++)
+  {
+    await NoticeModel.findByIdAndUpdate(getallnotice[i]._id, {text: notices[i].text})
+  }
+ 
     return res.status(200).json({
-      message: "Order updated successfully",
-      success: true
+      message: 'Notices updated successfully',
+      getallnotice,
+      success: true,
     });
-
   } catch (error) {
-    console.error("Internal Server Error:", error);
+    console.error('Error updating notices:', error); // Use console.error for errors
     return res.status(500).json({
-      message: "Internal server error",
-      success: false
+      message: 'Internal server error',
+      success: false,
     });
   }
 };
-
